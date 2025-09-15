@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern App Dev Portfolio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            color: #1a202c; /* Dark gray text */
+            background-color: #f7fafc; /* Light gray background */
+        }
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px 40px;
+            background-color: #48bb78;
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            display: none;
+            text-align: center;
+        }
+        .slider-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .slider-image-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+        }
+        .slider-image-container.active {
+            opacity: 1;
+        }
+        .slider-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 1rem;
+        }
+        .slider-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            padding: 10px;
+            border-radius: 50%;
+            z-index: 20; /* Higher than images */
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .slider-button:hover {
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+        #prevBtn {
+            left: 20px;
+        }
+        #nextBtn {
+            right: 20px;
+        }
+        .slider-indicators {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            justify-content: center;
+            z-index: 20;
+        }
+        .indicator-dot {
+            width: 10px;
+            height: 10px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            margin: 0 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+        .indicator-dot.active {
+            background-color: white;
+            transform: scale(1.2);
+        }
+        .hero-content {
+            position: relative;
+            z-index: 10;
+        }
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Canvas for the particle background -->
+    <canvas id="particle-canvas"></canvas>
+
+    <!-- Message Box for alerts -->
+    <div id="message-box" class="message-box"></div>
+
+    <!-- Navigation Bar -->
+    <nav class="sticky top-0 z-50 bg-white/80 backdrop-blur-md p-4 shadow-sm">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="#" class="text-2xl font-bold text-gray-900">YourName</a>
+            <div class="hidden md:flex space-x-6 lg:space-x-10">
+                <a href="#" class="text-gray-600 hover:text-gray-900 transition-colors duration-300">Home</a>
+                <a href="#about" class="text-gray-600 hover:text-gray-900 transition-colors duration-300">About</a>
+                <a href="#skills" class="text-gray-600 hover:text-gray-900 transition-colors duration-300">Skills</a>
+                <a href="#portfolio" class="text-gray-600 hover:text-gray-900 transition-colors duration-300">Portfolio</a>
+                <a href="#resume" class="text-gray-600 hover:text-gray-900 transition-colors duration-300">Resume</a>
+                <a href="#pricing" class="text-gray-600 hover:text-gray-900 transition-colors duration-300">Pricing</a>
+                <a href="#contact" class="text-gray-600 hover:text-gray-900 transition-colors duration-300">Contact</a>
+            </div>
+            <!-- Mobile Menu Button -->
+            <button id="mobile-menu-btn" class="md:hidden text-gray-900 focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                </svg>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-menu" class="fixed inset-0 z-40 bg-black/90 transform transition-transform duration-300 -translate-y-full">
+        <div class="flex flex-col items-center justify-center min-h-screen text-center space-y-8">
+            <button id="close-menu-btn" class="absolute top-6 right-6 text-white focus:outline-none">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+            <a href="#" class="block text-white text-2xl hover:text-indigo-400 transition-colors duration-300">Home</a>
+            <a href="#about" class="block text-white text-2xl hover:text-indigo-400 transition-colors duration-300">About</a>
+            <a href="#skills" class="block text-white text-2xl hover:text-indigo-400 transition-colors duration-300">Skills</a>
+            <a href="#portfolio" class="block text-white text-2xl hover:text-indigo-400 transition-colors duration-300">Portfolio</a>
+            <a href="#resume" class="block text-white text-2xl hover:text-indigo-400 transition-colors duration-300">Resume</a>
+            <a href="#pricing" class="block text-white text-2xl hover:text-indigo-400 transition-colors duration-300">Pricing</a>
+            <a href="#contact" class="block text-white text-2xl hover:text-indigo-400 transition-colors duration-300">Contact</a>
+        </div>
+    </div>
+
+    <!-- Image Slider Hero Section with Text Overlay -->
+    <div class="relative min-h-screen flex flex-col items-center justify-center text-center p-8 bg-gray-100 overflow-hidden">
+        <!-- Image Slider Content -->
+        <div class="absolute inset-0 z-0">
+            <div class="slider-container">
+                <!-- Slide 1 -->
+                <div class="slider-image-container active">
+                    <img src="https://images.unsplash.com/photo-1596495578065-64730728c319?q=80&w=1932&auto=format&fit=crop" alt="Android Development Workspace" class="slider-image">
+                </div>
+                <!-- Slide 2 -->
+                <div class="slider-image-container">
+                    <img src="https://images.unsplash.com/photo-1542831371-29b0f74f9713?q=80&w=1770&auto=format&fit=crop" alt="Code on Screen" class="slider-image">
+                </div>
+                <!-- Slide 3 -->
+                <div class="slider-image-container">
+                    <img src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=1770&auto=format&fit=crop" alt="Mobile App in Hand" class="slider-image">
+                </div>
+            </div>
+        </div>
+
+        <!-- Text and Button Overlay -->
+        <div class="relative z-10 px-4 py-8 md:px-8 max-w-4xl mx-auto hero-content">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-8 text-white">
+                <div class="md:w-1/2 text-left">
+                    <h1 class="text-4xl md:text-6xl font-extrabold leading-tight tracking-tight animated-text">
+                        Crafting Beautiful Mobile Apps
+                    </h1>
+                    <p class="mt-4 text-lg md:text-xl font-light animated-text">
+                        I'm <span class="font-bold">YourName</span>, a passionate Mobile App Developer creating intuitive and elegant solutions for modern platforms.
+                    </p>
+                    <a href="#contact" class="mt-8 inline-block px-8 py-4 bg-gray-900 text-white font-semibold rounded-full shadow-lg hover:bg-gray-700 transition-colors duration-300 animated-text">
+                        Get In Touch
+                    </a>
+                </div>
+                <!-- Android icon container -->
+                <div class="md:w-1/2 w-full mt-8 md:mt-0 flex justify-center items-center">
+                    <img src="android(2).png" alt="Android Icon" class="w-[512px] h-[512px] animated-text">
+                </div>
+            </div>
+        </div>
+
+        <!-- Slider Navigation -->
+        <button id="prevBtn" class="slider-button">&#10094;</button>
+        <button id="nextBtn" class="slider-button">&#10095;</button>
+        <div id="slider-indicators" class="slider-indicators">
+            <!-- Indicator dots will be generated by JavaScript -->
+        </div>
+    </div>
+
+
+    <!-- About Section -->
+    <section id="about" class="relative z-10 py-20 px-4 md:px-8 bg-white">
+        <div class="container mx-auto text-center max-w-3xl">
+            <h2 class="text-3xl md:text-4xl font-bold mb-8 text-gray-900">About Me</h2>
+            <p class="text-lg md:text-xl leading-relaxed text-gray-600">
+                As a mobile app developer, I specialize in building high-performance, user-friendly applications for both iOS and Android platforms. With a strong foundation in modern frameworks like **Flutter** and **React Native**, I transform complex ideas into intuitive digital experiences. I am dedicated to clean code, pixel-perfect design, and delivering products that users love.
+            </p>
+        </div>
+    </section>
+
+    <!-- Skills Section -->
+    <section id="skills" class="relative z-10 py-20 px-4 md:px-8 bg-gray-100">
+        <div class="container mx-auto text-center">
+            <h2 class="text-3xl md:text-4xl font-bold mb-12 text-gray-900">My Skills</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
+                <!-- Skill Card 1 -->
+                <div class="bg-white p-6 rounded-xl shadow-lg transform hover:scale-105 transition-transform duration-300">
+                    <div class="text-4xl md:text-5xl mb-4 text-indigo-500">
+                        ⚙️
+                    </div>
+                    <h3 class="font-semibold text-lg mb-2 text-gray-900">Kotlin</h3>
+                </div>
+                <!-- Skill Card 2 -->
+                <div class="bg-white p-6 rounded-xl shadow-lg transform hover:scale-105 transition-transform duration-300">
+                    <div class="text-4xl md:text-5xl mb-4 text-green-500">
+                        🎨
+                    </div>
+                    <h3 class="font-semibold text-lg mb-2 text-gray-900">Jetpack Compose</h3>
+                </div>
+                <!-- Skill Card 3 -->
+                <div class="bg-white p-6 rounded-xl shadow-lg transform hover:scale-105 transition-transform duration-300">
+                    <div class="text-4xl md:text-5xl mb-4 text-purple-500">
+                        📝
+                    </div>
+                    <h3 class="font-semibold text-lg mb-2 text-gray-900">XML View System</h3>
+                </div>
+                <!-- Skill Card 4 -->
+                <div class="bg-white p-6 rounded-xl shadow-lg transform hover:scale-105 transition-transform duration-300">
+                    <div class="text-4xl md:text-5xl mb-4 text-blue-500">
+                        🦋
+                    </div>
+                    <h3 class="font-semibold text-lg mb-2 text-gray-900">Flutter</h3>
+                </div>
+                <!-- Skill Card 5 -->
+                <div class="bg-white p-6 rounded-xl shadow-lg transform hover:scale-105 transition-transform duration-300">
+                    <div class="text-4xl md:text-5xl mb-4 text-red-500">
+                        🎯
+                    </div>
+                    <h3 class="font-semibold text-lg mb-2 text-gray-900">Dart</h3>
+                </div>
+                <!-- Skill Card 6 -->
+                <div class="bg-white p-6 rounded-xl shadow-lg transform hover:scale-105 transition-transform duration-300">
+                    <div class="text-4xl md:text-5xl mb-4 text-pink-500">
+                        🎨
+                    </div>
+                    <h3 class="font-semibold text-lg mb-2 text-gray-900">Figma</h3>
+                </div>
+                <!-- Skill Card 7 -->
+                <div class="bg-white p-6 rounded-xl shadow-lg transform hover:scale-105 transition-transform duration-300">
+                    <div class="text-4xl md:text-5xl mb-4 text-yellow-500">
+                        🌐
+                    </div>
+                    <h3 class="font-semibold text-lg mb-2 text-gray-900">KMP / CMP</h3>
+                    <p class="text-sm text-gray-500">Android, iOS, Desktop, Web</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Portfolio Section -->
+    <section id="portfolio" class="relative z-10 py-20 px-4 md:px-8 bg-white">
+        <div class="container mx-auto text-center max-w-5xl">
+            <h2 class="text-3xl md:text-4xl font-bold mb-12 text-gray-900">My Portfolio</h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Project Card 1 -->
+                <div class="bg-gray-100 rounded-xl shadow-lg overflow-hidden transform hover:scale-105 transition-transform duration-300">
+                    <img src="https://placehold.co/600x400/b197b1/2c3e50?text=Project+1" alt="Project 1" class="w-full h-auto">
+                    <div class="p-6">
+                        <h3 class="font-bold text-xl mb-2 text-gray-900">Finance App</h3>
+                        <p class="text-sm text-gray-600">A personal finance tracker built with Flutter, featuring real-time data sync.</p>
+                    </div>
+                </div>
+                <!-- Project Card 2 -->
+                <div class="bg-gray-100 rounded-xl shadow-lg overflow-hidden transform hover:scale-105 transition-transform duration-300">
+                    <img src="https://placehold.co/600x400/96a6a6/2c3e50?text=Project+2" alt="Project 2" class="w-full h-auto">
+                    <div class="p-6">
+                        <h3 class="font-bold text-xl mb-2 text-gray-900">E-commerce Platform</h3>
+                        <p class="text-sm text-gray-600">A scalable e-commerce app developed with React Native and Stripe integration.</p>
+                    </div>
+                </div>
+                <!-- Project Card 3 -->
+                <div class="bg-gray-100 rounded-xl shadow-lg overflow-hidden transform hover:scale-105 transition-transform duration-300">
+                    <img src="https://placehold.co/600x400/6f8181/2c3e50?text=Project+3" alt="Project 3" class="w-full h-auto">
+                    <div class="p-6">
+                        <h3 class="font-bold text-xl mb-2 text-gray-900">Recipe Sharing App</h3>
+                        <p class="text-sm text-gray-600">A social app for sharing recipes, built with a Firebase backend and Flutter.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Resume Section -->
+    <section id="resume" class="relative z-10 py-20 px-4 md:px-8 bg-gray-100">
+        <div class="container mx-auto max-w-5xl">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4 text-gray-900">My Resume</h2>
+                <div class="text-gray-600 text-sm">
+                    <p class="mb-1">Chad Uddyan Housing, Mohammadpur, Dhaka - 1207</p>
+                    <p class="mb-1">Phone: +880-1833072034 | +880-1795915970</p>
+                    <p class="mb-1">Email: mdtasnimulh@gmail.com</p>
+                    <p class="mb-1">LinkedIn: Tasnimul | GitHub: Tasnimul</p>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-12 text-gray-900">
+                <div class="bg-white p-8 rounded-xl shadow-lg">
+                    <h3 class="text-2xl font-bold mb-4 text-indigo-500">Career Objective</h3>
+                    <p class="text-gray-600">Innovative and results-driven Software Engineer with a strong foundation in mobile app development, seeking to leverage expertise in creating high-performance, user-centric applications. Eager to contribute to a dynamic team where I can apply my skills in coding, problem-solving, and UX/UI design to deliver cutting-edge mobile solutions. Committed to continuous learning and staying at the forefront of technology trends to drive impactful software innovations and enhance user experiences.</p>
+                </div>
+                <div class="bg-white p-8 rounded-xl shadow-lg">
+                    <h3 class="text-2xl font-bold mb-4 text-indigo-500">About Me</h3>
+                    <p class="text-gray-600">I have a background in Computer Science & Engineering, with a focus on back-end and front-end development. I am the type of person who seizes every opportunity to learn something new. That is why I enjoy challenges. From there, I'm under pressure to learn quickly and gain a lot of new experience.</p>
+                </div>
+            </div>
+
+            <div class="mt-12 bg-white p-8 rounded-xl shadow-lg">
+                <h3 class="text-2xl font-bold mb-4 text-indigo-500">Experience</h3>
+                <div class="space-y-8">
+                    <div>
+                        <h4 class="font-bold text-lg">Software Engineer, Mononsoft <span class="text-gray-500 font-normal float-right">April 2024 - Present</span></h4>
+                        <ul class="list-disc list-inside text-gray-600 mt-2 space-y-1">
+                            <li>Used Kotlin as a backend language and XML as a front-end language.</li>
+                            <li>Implemented an ERP system using cloud data with API integration.</li>
+                            <li>Utilized Room Database and Shared Preferences for local caching.</li>
+                            <li>Designed app layouts using XML with advanced animations and custom views.</li>
+                            <li>Implemented MVVM and Clean Architecture as recommended by Google.</li>
+                            <li>Implemented Multi-Modular Architecture for easy project maintainability, code reusability, and a better user experience.</li>
+                            <li>Used Firebase for crash analytics.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-lg">Junior Mobile App Dev - Mobile App Dev, Bdjobs.Com Ltd <span class="text-gray-500 font-normal float-right">September 2022 - April 2024</span></h4>
+                        <ul class="list-disc list-inside text-gray-600 mt-2 space-y-1">
+                            <li>Used Kotlin as a backend language and XML as a front-end language.</li>
+                            <li>Displayed cloud server data using API integration.</li>
+                            <li>Utilized Firebase Crashlytics for post-release crash tracking.</li>
+                            <li>Used Room Database & Shared Preferences for local caching.</li>
+                            <li>Implemented MVVM architecture.</li>
+                            <li>Designed app layouts using XML with advanced animations and custom views.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-lg">Executive, BCOM Online Limited <span class="text-gray-500 font-normal float-right">May 2022 - July 2022</span></h4>
+                        <ul class="list-disc list-inside text-gray-600 mt-2 space-y-1">
+                            <li>Created and generated reports for daily sales and service delivery.</li>
+                            <li>Used MS Excel and MS Word for report generation.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-12 grid md:grid-cols-2 gap-12">
+                <div class="bg-white p-8 rounded-xl shadow-lg">
+                    <h3 class="text-2xl font-bold mb-4 text-indigo-500">Education</h3>
+                    <ul class="space-y-4">
+                        <li>
+                            <h4 class="font-bold text-lg">Daffodil International University</h4>
+                            <p class="text-gray-600">Bachelor of Science in Computer Science & Engineering</p>
+                            <p class="text-gray-500 text-sm">2018 - 2021 | GPA: 3.59/4.0</p>
+                        </li>
+                        <li>
+                            <h4 class="font-bold text-lg">Thakurgaon Polytechnic Institute</h4>
+                            <p class="text-gray-600">Diploma in Computer Technology</p>
+                            <p class="text-gray-500 text-sm">2013 - 2017 | GPA: 3.06/4.0</p>
+                        </li>
+                        <li>
+                            <h4 class="font-bold text-lg">Thakurgaon Govt. Boys High School</h4>
+                            <p class="text-gray-600">Science, Secondary School Certificate</p>
+                            <p class="text-gray-500 text-sm">2013</p>
+                        </li>
+                    </ul>
+                </div>
+                <div class="bg-white p-8 rounded-xl shadow-lg">
+                    <h3 class="text-2xl font-bold mb-4 text-indigo-500">Honors & Awards</h3>
+                    <ul class="list-disc list-inside text-gray-600 space-y-1">
+                        <li>Best final year project from the batch on Mobile Apps Development.</li>
+                        <li>Best Industrial Trainee on Web Design & Development for Diploma in Engineering.</li>
+                    </ul>
+
+                    <h3 class="text-2xl font-bold mt-8 mb-4 text-indigo-500">Hobbies & Interests</h3>
+                    <p class="text-gray-600">Traveling, Food, Cooking, Nutrition, Mobile & PC Gaming, Gadgets, Arts & Crafts, Painting</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="relative z-10 py-20 px-4 md:px-8 bg-white">
+        <div class="container mx-auto text-center max-w-5xl">
+            <h2 class="text-3xl md:text-4xl font-bold mb-12 text-gray-900">Pricing</h2>
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Pricing Card 1 -->
+                <div class="bg-gray-100 p-8 rounded-xl shadow-lg transform hover:scale-105 transition-transform duration-300">
+                    <h3 class="text-2xl font-bold mb-4 text-gray-900">Basic App</h3>
+                    <p class="text-5xl font-extrabold mb-4 text-gray-900">$5k<span class="text-lg text-gray-500"> / project</span></p>
+                    <ul class="text-left space-y-2 mb-6 text-gray-600">
+                        <li>&#10003; 1-3 Screens</li>
+                        <li>&#10003; Basic UI/UX</li>
+                        <li>&#10003; Standard features</li>
+                        <li class="line-through text-gray-400">&#10005; Custom backend</li>
+                        <li class="line-through text-gray-400">&#10005; Advanced animations</li>
+                    </ul>
+                    <a href="#contact" class="inline-block w-full py-3 px-6 rounded-full bg-gray-900 text-white font-bold hover:bg-gray-700 transition-colors duration-300">Get Started</a>
+                </div>
+                <!-- Pricing Card 2 -->
+                <div class="bg-gray-100 p-8 rounded-xl shadow-lg border-2 border-indigo-500 transform hover:scale-105 transition-transform duration-300">
+                    <h3 class="text-2xl font-bold mb-4 text-gray-900">Pro App</h3>
+                    <p class="text-5xl font-extrabold mb-4 text-gray-900">$15k<span class="text-lg text-gray-500"> / project</span></p>
+                    <ul class="text-left space-y-2 mb-6 text-gray-600">
+                        <li>&#10003; Up to 10 Screens</li>
+                        <li>&#10003; Custom UI/UX</li>
+                        <li>&#10003; API Integration</li>
+                        <li>&#10003; Custom backend</li>
+                        <li class="line-through text-gray-400">&#10005; Advanced animations</li>
+                    </ul>
+                    <a href="#contact" class="inline-block w-full py-3 px-6 rounded-full bg-indigo-500 text-white font-bold hover:bg-indigo-600 transition-colors duration-300">Get Started</a>
+                </div>
+                <!-- Pricing Card 3 -->
+                <div class="bg-gray-100 p-8 rounded-xl shadow-lg transform hover:scale-105 transition-transform duration-300">
+                    <h3 class="text-2xl font-bold mb-4 text-gray-900">Enterprise</h3>
+                    <p class="text-5xl font-extrabold mb-4 text-gray-900">Custom</p>
+                    <ul class="text-left space-y-2 mb-6 text-gray-600">
+                        <li>&#10003; Unlimited screens</li>
+                        <li>&#10003; Bespoke UI/UX</li>
+                        <li>&#10003; Dedicated team</li>
+                        <li>&#10003; Advanced animations</li>
+                        <li>&#10003; Ongoing support</li>
+                    </ul>
+                    <a href="#contact" class="inline-block w-full py-3 px-6 rounded-full bg-gray-900 text-white font-bold hover:bg-gray-700 transition-colors duration-300">Contact for Quote</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="relative z-10 py-20 px-4 md:px-8 text-white">
+        <!-- Google Map iframe -->
+        <div class="absolute inset-0 z-0">
+            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d116834.0097775952!2d90.35412959648943!3d23.780887455855008!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3755b8b087029b9f%3A0x6d11f725916960c9!2sDhaka%2C%20Bangladesh!5e0!3m2!1sen!2sbd!4v1700000000000!5m2!1sen!2sbd" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+        <!-- Black Overlay -->
+        <div class="absolute inset-0 z-10 bg-black/70"></div>
+        <!-- Contact Content (on top) -->
+        <div class="relative z-20 container mx-auto text-center max-w-xl">
+            <h2 class="text-3xl md:text-4xl font-bold mb-8 text-white">Contact Me</h2>
+            <form id="contact-form" class="space-y-6 text-left p-8 bg-white/10 backdrop-blur-sm rounded-xl">
+                <div>
+                    <label for="name" class="block text-sm font-medium text-white mb-1">Name</label>
+                    <input type="text" id="name" name="name" class="w-full p-3 rounded-lg bg-transparent text-white border border-white focus:outline-none focus:border-indigo-500 transition-colors duration-300" required>
+                </div>
+                <div>
+                    <label for="email" class="block text-sm font-medium text-white mb-1">Email</label>
+                    <input type="email" id="email" name="email" class="w-full p-3 rounded-lg bg-transparent text-white border border-white focus:outline-none focus:border-indigo-500 transition-colors duration-300" required>
+                </div>
+                <div>
+                    <label for="message" class="block text-sm font-medium text-white mb-1">Message</label>
+                    <textarea id="message" name="message" rows="4" class="w-full p-3 rounded-lg bg-transparent text-white border border-white focus:outline-none focus:border-indigo-500 transition-colors duration-300" required></textarea>
+                </div>
+                <button type="submit" class="w-full py-3 px-6 rounded-full font-bold bg-indigo-500 text-white hover:bg-indigo-600 transition-colors duration-300">Send Message</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="relative z-10 py-8 text-center bg-gray-900">
+        <p class="text-sm text-gray-400">&copy; 2024 YourName. All Rights Reserved.</p>
+    </footer>
+
+    <script>
+        // Smooth scrolling for navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetHref = this.getAttribute('href');
+                if (targetHref === '#') {
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                } else {
+                    document.querySelector(targetHref).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
+                // Close mobile menu after clicking a link
+                document.getElementById('mobile-menu').classList.remove('translate-y-0');
+                document.getElementById('mobile-menu').classList.add('-translate-y-full');
+            });
+        });
+
+        // Mobile menu toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const closeMenuBtn = document.getElementById('close-menu-btn');
+
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.remove('-translate-y-full');
+            mobileMenu.classList.add('translate-y-0');
+        });
+
+        closeMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.remove('translate-y-0');
+            mobileMenu.classList.add('-translate-y-full');
+        });
+
+        // Form submission handler
+        document.getElementById('contact-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const messageBox = document.getElementById('message-box');
+            messageBox.textContent = 'Message sent! I will get back to you shortly.';
+            messageBox.style.display = 'block';
+
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, 3000);
+            this.reset();
+        });
+
+        // Image Slider Logic
+        const slides = document.querySelectorAll('.slider-image-container');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const indicatorsContainer = document.getElementById('slider-indicators');
+        let currentSlide = 0;
+        const totalSlides = slides.length;
+        let slideInterval;
+
+        // Create indicator dots dynamically
+        function createIndicators() {
+            for (let i = 0; i < totalSlides; i++) {
+                const dot = document.createElement('div');
+                dot.classList.add('indicator-dot');
+                if (i === 0) {
+                    dot.classList.add('active');
+                }
+                dot.addEventListener('click', () => {
+                    goToSlide(i);
+                });
+                indicatorsContainer.appendChild(dot);
+            }
+        }
+
+        function updateSlider() {
+            slides.forEach((slide, index) => {
+                slide.classList.toggle('active', index === currentSlide);
+            });
+            updateIndicators();
+        }
+
+        function updateIndicators() {
+            const dots = indicatorsContainer.querySelectorAll('.indicator-dot');
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentSlide);
+            });
+        }
+
+        function goToSlide(index) {
+            currentSlide = index;
+            if (currentSlide < 0) {
+                currentSlide = totalSlides - 1;
+            } else if (currentSlide >= totalSlides) {
+                currentSlide = 0;
+            }
+            updateSlider();
+            resetAutoSlide();
+        }
+
+        function autoSlide() {
+            goToSlide(currentSlide + 1);
+        }
+
+        function resetAutoSlide() {
+            clearInterval(slideInterval);
+            slideInterval = setInterval(autoSlide, 5000); // Change slide every 5 seconds
+        }
+
+        prevBtn.addEventListener('click', () => {
+            goToSlide(currentSlide - 1);
+        });
+
+        nextBtn.addEventListener('click', () => {
+            goToSlide(currentSlide + 1);
+        });
+
+        // Initialize the slider
+        createIndicators();
+        updateSlider();
+        resetAutoSlide(); // Start the auto-slide
+        
+        // --- Android Particle Background ---
+
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        const particleCount = 200;
+        const maxDist = 80;
+        let mouse = { x: null, y: null };
+
+        // Set up the canvas
+        function setCanvasSize() {
+            canvas.width = window.innerWidth;
+            canvas.height = document.documentElement.scrollHeight;
+        }
+
+        setCanvasSize();
+        window.addEventListener('resize', setCanvasSize);
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY + window.scrollY;
+        });
+
+        // The Android Logo drawing function
+        function drawAndroid(x, y, size) {
+            ctx.fillStyle = '#3DDC84'; // Android Green
+
+            // Body
+            ctx.beginPath();
+            ctx.roundRect(x + size * 0.1, y + size * 0.4, size * 0.8, size * 0.5, size * 0.1);
+            ctx.fill();
+            ctx.closePath();
+
+            // Head (Path with rounded top)
+            ctx.beginPath();
+            ctx.moveTo(x + size * 0.1, y + size * 0.4);
+            ctx.lineTo(x + size * 0.1, y + size * 0.2);
+            ctx.arc(x + size * 0.5, y + size * 0.2, size * 0.4, Math.PI, 0, false);
+            ctx.lineTo(x + size * 0.9, y + size * 0.4);
+            ctx.fill();
+            ctx.closePath();
+
+            // Eyes (white circles)
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.arc(x + size * 0.35, y + size * 0.3, size * 0.05, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.closePath();
+            ctx.beginPath();
+            ctx.arc(x + size * 0.65, y + size * 0.3, size * 0.05, 0, 2 * Math.PI);
+            ctx.fill();
+            ctx.closePath();
+
+            // Antennae (lines)
+            ctx.strokeStyle = '#3DDC84';
+            ctx.lineWidth = size * 0.05;
+            ctx.beginPath();
+            ctx.moveTo(x + size * 0.25, y + size * 0.2);
+            ctx.lineTo(x + size * 0.15, y + size * 0.05);
+            ctx.moveTo(x + size * 0.75, y + size * 0.2);
+            ctx.lineTo(x + size * 0.85, y + size * 0.05);
+            ctx.stroke();
+            ctx.closePath();
+        }
+
+        // Particle class
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 5 + 3;
+                this.baseSize = this.size;
+                this.speedX = Math.random() * 0.5 - 0.25;
+                this.speedY = Math.random() * 0.5 - 0.25;
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                // Bounce off walls
+                if (this.x > canvas.width || this.x < 0) this.speedX = -this.speedX;
+                if (this.y > canvas.height || this.y < 0) this.speedY = -this.speedY;
+
+                // Mouse interaction
+                if (mouse.x && mouse.y) {
+                    const dx = this.x - mouse.x;
+                    const dy = this.y - mouse.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance < maxDist) {
+                        this.size = this.baseSize * 1.5;
+                    } else {
+                        this.size = this.baseSize;
+                    }
+                }
+            }
+
+            draw() {
+                drawAndroid(this.x, this.y, this.size);
+            }
+        }
+
+        function initParticles() {
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        window.onload = function () {
+            initParticles();
+            animate();
+        };
+
+    </script>
+
+</body>
+</html>
